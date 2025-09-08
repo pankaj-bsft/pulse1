@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1722,3 +1723,605 @@
                                 );
                                 
                                 if (isCompliance || isModeRelevant) {
+                                    relevantArticleCount++;
+                                    const article = {
+                                        title: cleanText(title).substring(0, 200),
+                                        link: link,
+                                        description: cleanText(description).substring(0, 300) + '...',
+                                        source: source,
+                                        category: config.category,
+                                        type: config.type,
+                                        pubDate: pubDate.toISOString(),
+                                        timestamp: pubDate.getTime(),
+                                        id: `compliance-${source}-${link}`,
+                                        complianceType: determineComplianceType(fullText),
+                                        tags: extractComplianceTags(fullText)
+                                    };
+                                    
+                                    newArticles.push(article);
+                                }
+                            }
+                        }
+                    });
+                    
+                    tempSourceStatus[source] = {
+                        category: config.category,
+                        type: config.type,
+                        status: relevantArticleCount > 0 ? 'active' : (sourceArticleCount > 0 ? 'inactive' : 'no-content'),
+                        lastArticle: latestDate ? formatDate(latestDate) : 'No updates in past 7 days',
+                        articleCount: relevantArticleCount,
+                        totalCount: sourceArticleCount,
+                        lastChecked: new Date().toISOString()
+                    };
+                    
+                } catch (error) {
+                    console.error(`Error fetching compliance feed ${source}:`, error.message);
+                    tempSourceStatus[source] = {
+                        category: config.category,
+                        type: config.type,
+                        status: 'error',
+                        lastArticle: 'Feed unavailable',
+                        articleCount: 0,
+                        lastChecked: new Date().toISOString(),
+                        error: error.message
+                    };
+                }
+                
+                complianceSourceStatusData = { ...tempSourceStatus };
+                displayComplianceSourceStatus();
+                
+                if (i < feedEntries.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
+            
+            const uniqueArticles = removeDuplicates(newArticles);
+            complianceArticles = uniqueArticles.sort((a, b) => b.timestamp - a.timestamp);
+            
+            localStorage.setItem(COMPLIANCE_STORAGE_KEY, JSON.stringify(complianceArticles));
+            localStorage.setItem(COMPLIANCE_LAST_UPDATE_KEY, Date.now());
+            localStorage.setItem(COMPLIANCE_SOURCE_STATUS_KEY, JSON.stringify(tempSourceStatus));
+            
+            complianceSourceStatusData = tempSourceStatus;
+            displayComplianceSourceStatus();
+            
+            displayComplianceArticles();
+            updateComplianceStats();
+            updateComplianceLastUpdated();
+            
+            button.disabled = false;
+            loading.style.display = 'none';
+            
+            const newCount = complianceArticles.filter(a => 
+                a.timestamp > parseInt(localStorage.getItem(COMPLIANCE_LAST_VISIT_KEY))
+            ).length;
+            
+            const activeCount = Object.values(tempSourceStatus).filter(s => s.status === 'active').length;
+            const totalSources = Object.keys(tempSourceStatus).length;
+            
+            alert(`Compliance refresh complete!\n\nCompliance updates from past 7 days: ${complianceArticles.length}\nNew since last visit: ${newCount}\nActive sources: ${activeCount}/${totalSources}`);
+        }
+
+        // Display source status table
+        function displaySourceStatus() {
+            const tbody = document.getElementById('source-status-body');
+            tbody.innerHTML = '';
+            
+            if (Object.keys(sourceStatusData).length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: var(--gray);">
+                            No source data available. Click "Refresh All Feeds" to check sources.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            // Sort sources by status (active first) then by name
+            const statusOrder = { 'active': 0, 'no-content': 1, 'inactive': 2, 'error': 3, 'checking': 4 };
+            const sortedSources = Object.entries(sourceStatusData).sort((a, b) => {
+                const statusDiff = statusOrder[a[1].status] - statusOrder[b[1].status];
+                if (statusDiff !== 0) return statusDiff;
+                return a[0].localeCompare(b[0]);
+            });
+            
+            sortedSources.forEach(([source, data]) => {
+                const row = document.createElement('tr');
+                
+                const statusClass = 
+                    data.status === 'active' ? 'status-active' :
+                    data.status === 'inactive' || data.status === 'no-content' ? 'status-inactive' :
+                    data.status === 'error' ? 'status-inactive' :
+                    'status-checking';
+                
+                const statusText = 
+                    data.status === 'active' ? '✅ Active' :
+                    data.status === 'no-content' ? '📭 No Recent Posts' :
+                    data.status === 'inactive' ? '🔍 No Relevant' :
+                    data.status === 'error' ? '❌ Unavailable' :
+                    '🔄 Checking';
+                
+                const articleText = data.totalCount !== undefined && data.totalCount > 0 ? 
+                    `${data.articleCount} relevant / ${data.totalCount} total` : 
+                    data.articleCount.toString();
+                
+                row.innerHTML = `
+                    <td>${source}</td>
+                    <td>${data.category}</td>
+                    <td class="${statusClass}">${statusText}</td>
+                    <td>${data.lastArticle}</td>
+                    <td>${articleText}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // Clean text
+        function cleanText(text) {
+            const div = document.createElement('div');
+            div.innerHTML = text;
+            let cleaned = div.textContent || div.innerText || '';
+            // Remove excessive whitespace
+            cleaned = cleaned.replace(/\s+/g, ' ').trim();
+            return cleaned;
+        }
+
+        // Determine priority
+        function determinePriority(text) {
+            const lowerText = text.toLowerCase();
+            const highPriorityKeywords = currentMode === 'email' ? EMAIL_HIGH_PRIORITY : SMS_HIGH_PRIORITY;
+            const mediumPriorityKeywords = currentMode === 'email' ? EMAIL_MEDIUM_PRIORITY : SMS_MEDIUM_PRIORITY;
+            
+            if (highPriorityKeywords.some(keyword => lowerText.includes(keyword))) {
+                return 'high';
+            }
+            
+            if (mediumPriorityKeywords.some(keyword => lowerText.includes(keyword))) {
+                return 'medium';
+            }
+            
+            return 'low';
+        }
+
+        // Extract tags
+        function extractTags(text) {
+            const tags = [];
+            const lowerText = text.toLowerCase();
+            
+            if (currentMode === 'email') {
+                // Email-specific tags
+                if (lowerText.includes('spf') || lowerText.includes('dkim') || lowerText.includes('dmarc')) tags.push('Authentication');
+                if (lowerText.includes('deliverability')) tags.push('Deliverability');
+                if (lowerText.includes('gdpr') || lowerText.includes('can-spam')) tags.push('Compliance');
+                if (lowerText.includes('gmail') || lowerText.includes('outlook')) tags.push('Provider Update');
+                if (lowerText.includes('segmentation') || lowerText.includes('personalization')) tags.push('Marketing');
+                if (lowerText.includes('api')) tags.push('API');
+                if (lowerText.includes('design') || lowerText.includes('template')) tags.push('Design');
+                if (lowerText.includes('blacklist') || lowerText.includes('blocklist')) tags.push('Blacklist');
+            } else {
+                // SMS-specific tags
+                if (lowerText.includes('10dlc') || lowerText.includes('a2p')) tags.push('10DLC/A2P');
+                if (lowerText.includes('tcpa') || lowerText.includes('compliance')) tags.push('Compliance');
+                if (lowerText.includes('rcs')) tags.push('RCS');
+                if (lowerText.includes('api')) tags.push('API');
+                if (lowerText.includes('deliverability')) tags.push('Deliverability');
+                if (lowerText.includes('marketing')) tags.push('Marketing');
+                if (lowerText.includes('security')) tags.push('Security');
+                if (lowerText.includes('carrier')) tags.push('Carrier');
+            }
+            
+            return tags;
+        }
+
+        // Remove duplicates
+        function removeDuplicates(articles) {
+            const seen = new Set();
+            return articles.filter(article => {
+                const key = article.link;
+                if (seen.has(key)) {
+                    return false;
+                }
+                seen.add(key);
+                return true;
+            });
+        }
+
+        // Display articles
+        function displayArticles() {
+            const container = document.getElementById('articles-container');
+            container.innerHTML = '';
+            
+            const lastVisitKey = currentMode === 'email' ? EMAIL_LAST_VISIT_KEY : SMS_LAST_VISIT_KEY;
+            const lastVisit = parseInt(localStorage.getItem(lastVisitKey));
+            
+            // Filter articles by current filter
+            let filtered = allArticles;
+            if (currentFilter !== 'all') {
+                filtered = allArticles.filter(a => a.priority === currentFilter);
+            }
+            
+            if (filtered.length === 0) {
+                const modeText = currentMode === 'email' ? 'email deliverability' : 'SMS industry';
+                container.innerHTML = `
+                    <div class="no-articles">
+                        <p>No ${modeText} articles found from the past 7 days.</p>
+                        <p>Click "Refresh All Feeds" to check for the latest updates.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Group by priority
+            const grouped = {
+                high: filtered.filter(a => a.priority === 'high'),
+                medium: filtered.filter(a => a.priority === 'medium'),
+                low: filtered.filter(a => a.priority === 'low')
+            };
+            
+            // Display each priority group
+            ['high', 'medium', 'low'].forEach(priority => {
+                if (grouped[priority].length > 0) {
+                    const section = document.createElement('div');
+                    section.className = 'articles-section';
+                    
+                    const priorityLabel = priority.charAt(0).toUpperCase() + priority.slice(1);
+                    const priorityIcon = priority === 'high' ? '🚨' : priority === 'medium' ? '⚠️' : 'ℹ️';
+                    
+                    section.innerHTML = `
+                        <h2 class="section-header priority-${priority}">
+                            ${priorityIcon} ${priorityLabel} Priority (${grouped[priority].length})
+                        </h2>
+                    `;
+                    
+                    grouped[priority].forEach(article => {
+                        const articleEl = createArticleElement(article, lastVisit);
+                        section.appendChild(articleEl);
+                    });
+                    
+                    container.appendChild(section);
+                }
+            });
+        }
+
+        // Create article element
+        function createArticleElement(article, lastVisit) {
+            const div = document.createElement('div');
+            div.className = 'article';
+            
+            const isNew = article.timestamp > lastVisit;
+            const date = new Date(article.pubDate);
+            
+            div.innerHTML = `
+                <div class="article-header">
+                    <a href="${article.link}" target="_blank" class="article-title">
+                        ${article.title}
+                    </a>
+                    ${isNew ? '<span class="new-badge">NEW</span>' : ''}
+                </div>
+                <div class="article-meta">
+                    <span class="article-source">${article.source}</span>
+                    <span>•</span>
+                    <span>${formatDate(date)}</span>
+                    <span>•</span>
+                    <span>${article.category}</span>
+                </div>
+                <div class="article-description">
+                    ${article.description}
+                </div>
+                <div class="article-tags">
+                    ${article.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                </div>
+            `;
+            
+            return div;
+        }
+
+        // Format date
+        function formatDate(date) {
+            const now = new Date();
+            const diff = now - date;
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            
+            if (days === 0) {
+                const hours = Math.floor(diff / (1000 * 60 * 60));
+                if (hours === 0) {
+                    const mins = Math.floor(diff / (1000 * 60));
+                    return mins < 1 ? 'Just now' : `${mins} minutes ago`;
+                }
+                return hours === 1 ? '1 hour ago' : `${hours} hours ago`;
+            } else if (days === 1) {
+                return 'Yesterday';
+            } else if (days < 7) {
+                return `${days} days ago`;
+            } else {
+                return date.toLocaleDateString();
+            }
+        }
+
+        // Filter by priority
+        function filterPriority(priority) {
+            currentFilter = priority;
+            
+            // Update button states
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            displayArticles();
+            updateStats();
+        }
+
+        // Update statistics
+        function updateStats() {
+            const lastVisitKey = currentMode === 'email' ? EMAIL_LAST_VISIT_KEY : SMS_LAST_VISIT_KEY;
+            const lastVisit = parseInt(localStorage.getItem(lastVisitKey));
+            
+            let filtered = allArticles;
+            if (currentFilter !== 'all') {
+                filtered = allArticles.filter(a => a.priority === currentFilter);
+            }
+            
+            document.getElementById('total-articles').textContent = filtered.length;
+            document.getElementById('new-articles').textContent = 
+                filtered.filter(a => a.timestamp > lastVisit).length;
+            document.getElementById('high-priority').textContent = 
+                allArticles.filter(a => a.priority === 'high').length;
+            
+            // Count active sources from status data
+            const activeSources = Object.values(sourceStatusData).filter(s => s.status === 'active').length;
+            document.getElementById('active-sources').textContent = activeSources;
+        }
+
+        // Update last updated time
+        function updateLastUpdated() {
+            const lastUpdateKey = currentMode === 'email' ? EMAIL_LAST_UPDATE_KEY : SMS_LAST_UPDATE_KEY;
+            const lastUpdate = localStorage.getItem(lastUpdateKey);
+            if (lastUpdate) {
+                const date = new Date(parseInt(lastUpdate));
+                document.getElementById('last-updated').textContent = formatDate(date);
+            }
+        }
+
+        // Determine compliance type
+        function determineComplianceType(text) {
+            const lowerText = text.toLowerCase();
+            
+            if (lowerText.includes('law') || lowerText.includes('legislation') || lowerText.includes('legal')) {
+                return 'law';
+            } else if (lowerText.includes('regulation') || lowerText.includes('regulatory')) {
+                return 'regulation';
+            } else if (lowerText.includes('mandate') || lowerText.includes('requirement')) {
+                return 'mandate';
+            } else if (lowerText.includes('guidance') || lowerText.includes('guideline')) {
+                return 'guidance';
+            }
+            
+            return 'update';
+        }
+
+        // Extract compliance tags
+        function extractComplianceTags(text) {
+            const tags = [];
+            const lowerText = text.toLowerCase();
+            
+            // Regulation types
+            if (lowerText.includes('tcpa')) tags.push('TCPA');
+            if (lowerText.includes('gdpr')) tags.push('GDPR');
+            if (lowerText.includes('ccpa') || lowerText.includes('cpra')) tags.push('CCPA/CPRA');
+            if (lowerText.includes('can-spam') || lowerText.includes('can spam')) tags.push('CAN-SPAM');
+            if (lowerText.includes('casl')) tags.push('CASL');
+            if (lowerText.includes('pecr')) tags.push('PECR');
+            if (lowerText.includes('10dlc')) tags.push('10DLC');
+            if (lowerText.includes('a2p')) tags.push('A2P');
+            
+            // Compliance topics
+            if (lowerText.includes('privacy')) tags.push('Privacy');
+            if (lowerText.includes('consent')) tags.push('Consent');
+            if (lowerText.includes('opt-in') || lowerText.includes('opt in')) tags.push('Opt-in');
+            if (lowerText.includes('enforcement')) tags.push('Enforcement');
+            if (lowerText.includes('penalty') || lowerText.includes('fine')) tags.push('Penalties');
+            if (lowerText.includes('deadline')) tags.push('Deadline');
+            
+            return tags;
+        }
+
+        // Display compliance articles
+        function displayComplianceArticles() {
+            const container = document.getElementById('compliance-articles-container');
+            container.innerHTML = '';
+            
+            const lastVisit = parseInt(localStorage.getItem(COMPLIANCE_LAST_VISIT_KEY));
+            
+            // Filter articles
+            let filtered = complianceArticles;
+            if (currentComplianceFilter !== 'all') {
+                filtered = complianceArticles.filter(a => a.complianceType === currentComplianceFilter);
+            }
+            
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="no-articles">
+                        <p>No compliance updates found from the past 7 days.</p>
+                        <p>Click "Refresh Compliance Feeds" to check for the latest regulatory updates.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Group by compliance type
+            const grouped = {};
+            const types = ['regulation', 'law', 'mandate', 'guidance', 'update'];
+            types.forEach(type => {
+                grouped[type] = filtered.filter(a => a.complianceType === type);
+            });
+            
+            // Display each group
+            types.forEach(type => {
+                if (grouped[type].length > 0) {
+                    const section = document.createElement('div');
+                    section.className = 'articles-section';
+                    
+                    const typeLabel = type.charAt(0).toUpperCase() + type.slice(1) + 's';
+                    const typeIcon = 
+                        type === 'regulation' ? '📋' :
+                        type === 'law' ? '⚖️' :
+                        type === 'mandate' ? '📜' :
+                        type === 'guidance' ? '📘' : '📢';
+                    
+                    section.innerHTML = `
+                        <h2 class="section-header priority-compliance">
+                            ${typeIcon} ${typeLabel} (${grouped[type].length})
+                        </h2>
+                    `;
+                    
+                    grouped[type].forEach(article => {
+                        const articleEl = createComplianceArticleElement(article, lastVisit);
+                        section.appendChild(articleEl);
+                    });
+                    
+                    container.appendChild(section);
+                }
+            });
+        }
+
+        // Create compliance article element
+        function createComplianceArticleElement(article, lastVisit) {
+            const div = document.createElement('div');
+            div.className = 'article compliance-article';
+            
+            const isNew = article.timestamp > lastVisit;
+            const date = new Date(article.pubDate);
+            
+            const typeLabel = article.type === 'Government' ? '🏛️' : 
+                             article.type === 'Nonprofit' ? '🤝' : 
+                             article.type === 'Legal' ? '⚖️' : '📰';
+            
+            div.innerHTML = `
+                <div class="article-header">
+                    <a href="${article.link}" target="_blank" class="article-title">
+                        ${article.title}
+                    </a>
+                    ${isNew ? '<span class="new-badge">NEW</span>' : ''}
+                    <span class="compliance-badge">${typeLabel} ${article.type}</span>
+                </div>
+                <div class="article-meta">
+                    <span class="article-source">${article.source}</span>
+                    <span>•</span>
+                    <span>${formatDate(date)}</span>
+                    <span>•</span>
+                    <span>${article.category}</span>
+                </div>
+                <div class="article-description">
+                    ${article.description}
+                </div>
+                <div class="article-tags">
+                    ${article.tags.map(tag => `<span class="tag compliance-tag">${tag}</span>`).join('')}
+                </div>
+            `;
+            
+            return div;
+        }
+
+        // Update compliance statistics
+        function updateComplianceStats() {
+            const lastVisit = parseInt(localStorage.getItem(COMPLIANCE_LAST_VISIT_KEY));
+            
+            let filtered = complianceArticles;
+            if (currentComplianceFilter !== 'all') {
+                filtered = complianceArticles.filter(a => a.complianceType === currentComplianceFilter);
+            }
+            
+            document.getElementById('total-compliance').textContent = filtered.length;
+            document.getElementById('new-compliance').textContent = 
+                filtered.filter(a => a.timestamp > lastVisit).length;
+            document.getElementById('regulatory-updates').textContent = 
+                complianceArticles.filter(a => a.complianceType === 'regulation' || a.complianceType === 'law').length;
+            
+            const activeSources = Object.values(complianceSourceStatusData).filter(s => s.status === 'active').length;
+            document.getElementById('active-compliance-sources').textContent = activeSources;
+        }
+
+        // Update compliance last updated
+        function updateComplianceLastUpdated() {
+            const lastUpdate = localStorage.getItem(COMPLIANCE_LAST_UPDATE_KEY);
+            if (lastUpdate) {
+                const date = new Date(parseInt(lastUpdate));
+                document.getElementById('compliance-last-updated').textContent = formatDate(date);
+            }
+        }
+
+        // Display compliance source status
+        function displayComplianceSourceStatus() {
+            const tbody = document.getElementById('compliance-source-status-body');
+            tbody.innerHTML = '';
+            
+            if (Object.keys(complianceSourceStatusData).length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: var(--gray);">
+                            No compliance source data available. Click "Refresh Compliance Feeds" to check sources.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            const statusOrder = { 'active': 0, 'no-content': 1, 'inactive': 2, 'error': 3, 'checking': 4 };
+            const sortedSources = Object.entries(complianceSourceStatusData).sort((a, b) => {
+                const statusDiff = statusOrder[a[1].status] - statusOrder[b[1].status];
+                if (statusDiff !== 0) return statusDiff;
+                return a[0].localeCompare(b[0]);
+            });
+            
+            sortedSources.forEach(([source, data]) => {
+                const row = document.createElement('tr');
+                
+                const statusClass = 
+                    data.status === 'active' ? 'status-active' :
+                    data.status === 'inactive' || data.status === 'no-content' ? 'status-inactive' :
+                    data.status === 'error' ? 'status-inactive' :
+                    'status-checking';
+                
+                const statusText = 
+                    data.status === 'active' ? '✅ Active' :
+                    data.status === 'no-content' ? '📭 No Recent Updates' :
+                    data.status === 'inactive' ? '🔍 No Relevant' :
+                    data.status === 'error' ? '❌ Unavailable' :
+                    '🔄 Checking';
+                
+                const typeIcon = 
+                    data.type === 'Government' ? '🏛️' :
+                    data.type === 'Nonprofit' ? '🤝' :
+                    data.type === 'Legal' ? '⚖️' : '📰';
+                
+                row.innerHTML = `
+                    <td>${source}</td>
+                    <td>${typeIcon} ${data.type}</td>
+                    <td class="${statusClass}">${statusText}</td>
+                    <td>${data.lastArticle}</td>
+                    <td>${data.articleCount}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+
+        // Filter compliance articles
+        function filterCompliance(type) {
+            currentComplianceFilter = type;
+            
+            // Update button states
+            document.querySelectorAll('#compliance-view .filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            displayComplianceArticles();
+            updateComplianceStats();
+        }
+    </script>
+</body>
+</html>
