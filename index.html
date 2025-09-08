@@ -1,0 +1,1724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blueshift Industry Monitor - Email & SMS</title>
+    <style>
+        :root {
+            --blueshift-blue: #1E3A8A;
+            --blueshift-light-blue: #3B82F6;
+            --blueshift-dark: #1E293B;
+            --success: #059669;
+            --error: #dc2626;
+            --warning: #f59e0b;
+            --gray: #64748b;
+            --light-gray: #f8fafc;
+            --border-gray: #e2e8f0;
+            --compliance-purple: #7C3AED;
+            --compliance-light: #EDE9FE;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--blueshift-dark);
+            background-color: var(--light-gray);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, var(--blueshift-blue) 0%, var(--blueshift-light-blue) 100%);
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .logo {
+            font-size: 36px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 10px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 400;
+            margin: 10px 0;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        /* Mode Switcher */
+        .mode-switcher {
+            background: white;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .mode-btn {
+            padding: 10px 30px;
+            border: 2px solid var(--border-gray);
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mode-btn:hover {
+            border-color: var(--blueshift-light-blue);
+        }
+
+        .mode-btn.active {
+            background: var(--blueshift-blue);
+            color: white;
+            border-color: var(--blueshift-blue);
+        }
+
+        /* View Tabs */
+        .view-tabs {
+            background: white;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .view-tab {
+            padding: 10px 25px;
+            background: var(--light-gray);
+            border: 2px solid transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .view-tab:hover {
+            background: white;
+            border-color: var(--border-gray);
+        }
+
+        .view-tab.active {
+            background: white;
+            border-color: var(--blueshift-blue);
+            color: var(--blueshift-blue);
+        }
+
+        .view-tab.compliance-tab.active {
+            border-color: var(--compliance-purple);
+            color: var(--compliance-purple);
+        }
+
+        /* Controls */
+        .controls {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .refresh-btn {
+            background: var(--blueshift-blue);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background 0.3s;
+        }
+
+        .refresh-btn:hover {
+            background: var(--blueshift-light-blue);
+        }
+
+        .refresh-btn:disabled {
+            background: var(--gray);
+            cursor: not-allowed;
+        }
+
+        .last-updated {
+            color: var(--gray);
+            font-size: 14px;
+        }
+
+        /* Filters */
+        .filters {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .filter-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .filter-label {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--blueshift-dark);
+        }
+
+        .filter-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border-gray);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .filter-btn:hover {
+            border-color: var(--blueshift-light-blue);
+        }
+
+        .filter-btn.active {
+            background: var(--blueshift-blue);
+            color: white;
+            border-color: var(--blueshift-blue);
+        }
+
+        /* Compliance Alert */
+        .compliance-alert {
+            background: var(--compliance-light);
+            border: 2px solid var(--compliance-purple);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .compliance-alert-icon {
+            font-size: 24px;
+        }
+
+        .compliance-alert-text {
+            flex: 1;
+        }
+
+        .compliance-alert-text h3 {
+            color: var(--compliance-purple);
+            margin-bottom: 5px;
+        }
+
+        /* Articles */
+        .articles-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .section-header {
+            font-size: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-gray);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .priority-high { color: var(--error); }
+        .priority-medium { color: var(--warning); }
+        .priority-compliance { color: var(--compliance-purple); }
+
+        .article {
+            padding: 20px;
+            margin-bottom: 15px;
+            border: 1px solid var(--border-gray);
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .article:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-color: var(--blueshift-light-blue);
+        }
+
+        .article.compliance-article {
+            border-left: 4px solid var(--compliance-purple);
+        }
+
+        .article-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+
+        .article-title {
+            font-size: 18px;
+            color: var(--blueshift-dark);
+            text-decoration: none;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .article-title:hover {
+            color: var(--blueshift-light-blue);
+        }
+
+        .article-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 10px;
+        }
+
+        .article-source {
+            font-weight: 500;
+        }
+
+        .article-description {
+            color: var(--blueshift-dark);
+            margin-bottom: 10px;
+            line-height: 1.8;
+        }
+
+        .article-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        .tag {
+            padding: 4px 8px;
+            background: var(--light-gray);
+            border-radius: 4px;
+            font-size: 12px;
+            color: var(--gray);
+        }
+
+        .tag.compliance-tag {
+            background: var(--compliance-light);
+            color: var(--compliance-purple);
+        }
+
+        .new-badge {
+            background: var(--success);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .compliance-badge {
+            background: var(--compliance-purple);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* Stats */
+        .stats {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+
+        .stat-card {
+            padding: 15px;
+            background: var(--light-gray);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card.compliance-stat {
+            background: var(--compliance-light);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--blueshift-blue);
+        }
+
+        .stat-value.compliance-value {
+            color: var(--compliance-purple);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--gray);
+            margin-top: 5px;
+        }
+
+        /* Source Status Table */
+        .source-status {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-gray);
+        }
+
+        th {
+            background: var(--light-gray);
+            font-weight: 600;
+            color: var(--blueshift-dark);
+        }
+
+        .status-active {
+            color: var(--success);
+            font-weight: 500;
+        }
+
+        .status-inactive {
+            color: var(--error);
+            font-weight: 500;
+        }
+
+        .status-checking {
+            color: var(--warning);
+            font-weight: 500;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray);
+        }
+
+        .spinner {
+            border: 3px solid var(--light-gray);
+            border-top: 3px solid var(--blueshift-blue);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .no-articles {
+            text-align: center;
+            padding: 40px;
+            color: var(--gray);
+        }
+
+        /* Alert notice */
+        .notice {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 8px;
+            text-align: center;
+            color: #92400e;
+        }
+
+        /* View specific */
+        .view-content {
+            display: none;
+        }
+
+        .view-content.active {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .mode-switcher, .view-tabs {
+                flex-direction: column;
+            }
+
+            .mode-btn, .view-tab {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .filter-group {
+                justify-content: center;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .article-header {
+                flex-direction: column;
+            }
+
+            .compliance-alert {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="logo">BLUESHIFT</div>
+            <h1>Industry & Compliance Monitor</h1>
+            <p>Real-time monitoring of Email/SMS updates, regulations, and compliance changes</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Mode Switcher -->
+        <div class="mode-switcher">
+            <button class="mode-btn active" onclick="switchMode('email')">
+                📧 Email Updates
+            </button>
+            <button class="mode-btn" onclick="switchMode('sms')">
+                📱 SMS Updates
+            </button>
+        </div>
+
+        <!-- View Tabs -->
+        <div class="view-tabs">
+            <button class="view-tab active" onclick="switchView('general')">
+                📰 General Updates
+            </button>
+            <button class="view-tab compliance-tab" onclick="switchView('compliance')">
+                ⚖️ Legal & Compliance
+            </button>
+        </div>
+
+        <div class="notice">
+            📅 Showing only updates from the past 7 days to keep you current with the latest industry news
+        </div>
+
+        <!-- General Updates View -->
+        <div id="general-view" class="view-content active">
+            <div class="controls">
+                <button class="refresh-btn" onclick="refreshFeeds()">
+                    🔄 Refresh All Feeds
+                </button>
+                <div class="last-updated">
+                    Last updated: <span id="last-updated">Never</span>
+                </div>
+            </div>
+
+            <div class="filters">
+                <div class="filter-label">Filter by Priority:</div>
+                <div class="filter-group">
+                    <button class="filter-btn active" onclick="filterPriority('all')">All Articles</button>
+                    <button class="filter-btn" onclick="filterPriority('high')">High Priority</button>
+                    <button class="filter-btn" onclick="filterPriority('medium')">Medium Priority</button>
+                    <button class="filter-btn" onclick="filterPriority('low')">Low Priority</button>
+                </div>
+            </div>
+
+            <div class="stats">
+                <h2 class="section-header">📊 Statistics (Past 7 Days)</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-articles">0</div>
+                        <div class="stat-label">Total Articles</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="new-articles">0</div>
+                        <div class="stat-label">New Since Last Visit</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="high-priority">0</div>
+                        <div class="stat-label">High Priority</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="active-sources">0</div>
+                        <div class="stat-label">Active Sources</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p id="loading-text">Loading industry updates...</p>
+            </div>
+
+            <div id="articles-container"></div>
+
+            <div class="source-status">
+                <h2 class="section-header">📡 Source Monitoring Status</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Source</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Last Article</th>
+                                <th>Articles (7 days)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="source-status-body">
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--gray);">
+                                    No source data available. Click "Refresh All Feeds" to check sources.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compliance View -->
+        <div id="compliance-view" class="view-content">
+            <div class="compliance-alert">
+                <div class="compliance-alert-icon">⚖️</div>
+                <div class="compliance-alert-text">
+                    <h3>Legal & Compliance Monitoring</h3>
+                    <p>Tracking regulatory updates, legal mandates, and compliance changes from authoritative sources</p>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="refresh-btn" onclick="refreshComplianceFeeds()">
+                    🔄 Refresh Compliance Feeds
+                </button>
+                <div class="last-updated">
+                    Last updated: <span id="compliance-last-updated">Never</span>
+                </div>
+            </div>
+
+            <div class="filters">
+                <div class="filter-label">Filter by Type:</div>
+                <div class="filter-group">
+                    <button class="filter-btn active" onclick="filterCompliance('all')">All Updates</button>
+                    <button class="filter-btn" onclick="filterCompliance('regulation')">Regulations</button>
+                    <button class="filter-btn" onclick="filterCompliance('law')">Law Changes</button>
+                    <button class="filter-btn" onclick="filterCompliance('mandate')">Mandates</button>
+                    <button class="filter-btn" onclick="filterCompliance('guidance')">Guidance</button>
+                </div>
+            </div>
+
+            <div class="stats">
+                <h2 class="section-header">⚖️ Compliance Statistics (Past 7 Days)</h2>
+                <div class="stats-grid">
+                    <div class="stat-card compliance-stat">
+                        <div class="stat-value compliance-value" id="total-compliance">0</div>
+                        <div class="stat-label">Total Updates</div>
+                    </div>
+                    <div class="stat-card compliance-stat">
+                        <div class="stat-value compliance-value" id="new-compliance">0</div>
+                        <div class="stat-label">New Since Last Visit</div>
+                    </div>
+                    <div class="stat-card compliance-stat">
+                        <div class="stat-value compliance-value" id="regulatory-updates">0</div>
+                        <div class="stat-label">Regulatory Changes</div>
+                    </div>
+                    <div class="stat-card compliance-stat">
+                        <div class="stat-value compliance-value" id="active-compliance-sources">0</div>
+                        <div class="stat-label">Active Sources</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="compliance-loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Loading compliance updates...</p>
+            </div>
+
+            <div id="compliance-articles-container"></div>
+
+            <div class="source-status">
+                <h2 class="section-header">🏛️ Compliance Source Monitoring</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Source</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Last Update</th>
+                                <th>Updates (7 days)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="compliance-source-status-body">
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--gray);">
+                                    No compliance source data available. Click "Refresh Compliance Feeds" to check sources.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Current mode and view
+        let currentMode = 'email';
+        let currentView = 'general';
+        let currentFilter = 'all';
+        let currentComplianceFilter = 'all';
+        let allArticles = [];
+        let complianceArticles = [];
+        let sourceStatusData = {};
+        let complianceSourceStatusData = {};
+
+        // Compliance RSS Feeds - Authoritative Sources
+        const COMPLIANCE_RSS_FEEDS = {
+            // US Government & Regulatory Bodies
+            'FCC Updates': {
+                url: 'https://www.fcc.gov/feeds/updates-feed',
+                category: 'US Regulatory',
+                type: 'Government'
+            },
+            'FTC Business Blog': {
+                url: 'https://www.ftc.gov/business-guidance/blog/feed',
+                category: 'US Regulatory',
+                type: 'Government'
+            },
+            'TCPA News': {
+                url: 'https://tcpablog.com/feed/',
+                category: 'US Compliance',
+                type: 'Legal'
+            },
+            
+            // EU/UK Regulatory
+            'ICO News': {
+                url: 'https://ico.org.uk/about-the-ico/media-centre/news-and-blogs/feed/',
+                category: 'UK Regulatory',
+                type: 'Government'
+            },
+            'EU Commission Digital': {
+                url: 'https://digital-strategy.ec.europa.eu/en/library/feed',
+                category: 'EU Regulatory',
+                type: 'Government'
+            },
+            
+            // Industry Associations
+            'DMA Advocacy': {
+                url: 'https://thedma.org/feed/',
+                category: 'Industry Association',
+                type: 'Nonprofit'
+            },
+            'CTIA Regulatory': {
+                url: 'https://www.ctia.org/news/feed',
+                category: 'Industry Association',
+                type: 'Nonprofit'
+            },
+            'M3AAWG Updates': {
+                url: 'https://www.m3aawg.org/feed',
+                category: 'Industry Association',
+                type: 'Nonprofit'
+            },
+            
+            // Legal & Compliance Blogs
+            'Email Marketing Law': {
+                url: 'https://www.emailmarketingrules.com/feed/',
+                category: 'Legal Analysis',
+                type: 'Expert'
+            },
+            'Privacy Laws & Business': {
+                url: 'https://www.privacylaws.com/feed/',
+                category: 'Privacy Compliance',
+                type: 'Legal'
+            },
+            
+            // International Regulatory
+            'ACMA Australia': {
+                url: 'https://www.acma.gov.au/rss.xml',
+                category: 'AU Regulatory',
+                type: 'Government'
+            },
+            'CRTC Canada': {
+                url: 'https://crtc.gc.ca/eng/rss/news.xml',
+                category: 'CA Regulatory',
+                type: 'Government'
+            }
+        };
+
+        // Email RSS Feeds Configuration - Extended list
+        const EMAIL_RSS_FEEDS = {
+            // Email Service Providers
+            'Mailgun Blog': {
+                url: 'https://www.mailgun.com/blog/feed/',
+                category: 'ESP'
+            },
+            'SparkPost Blog': {
+                url: 'https://www.sparkpost.com/blog/feed/',
+                category: 'ESP'
+            },
+            'Postmark Blog': {
+                url: 'https://postmarkapp.com/blog/feed',
+                category: 'ESP'
+            },
+            'SendGrid Blog': {
+                url: 'https://sendgrid.com/en-us/blog/feed',
+                category: 'ESP'
+            },
+            'Mailjet Blog': {
+                url: 'https://www.mailjet.com/blog/feed/',
+                category: 'ESP'
+            },
+            'Brevo (Sendinblue) Blog': {
+                url: 'https://www.brevo.com/blog/feed/',
+                category: 'ESP'
+            },
+            'Amazon SES Blog': {
+                url: 'https://aws.amazon.com/blogs/messaging-and-targeting/feed/',
+                category: 'ESP'
+            },
+            
+            // Email Marketing Platforms
+            'Mailchimp Resources': {
+                url: 'https://mailchimp.com/resources/rss/',
+                category: 'Email Marketing'
+            },
+            'Campaign Monitor Blog': {
+                url: 'https://www.campaignmonitor.com/blog/feed/',
+                category: 'Email Marketing'
+            },
+            'ActiveCampaign Blog': {
+                url: 'https://www.activecampaign.com/blog/feed',
+                category: 'Email Marketing'
+            },
+            'ConvertKit Blog': {
+                url: 'https://convertkit.com/resources/blog/feed',
+                category: 'Email Marketing'
+            },
+            'AWeber Blog': {
+                url: 'https://blog.aweber.com/feed',
+                category: 'Email Marketing'
+            },
+            'GetResponse Blog': {
+                url: 'https://www.getresponse.com/blog/feed',
+                category: 'Email Marketing'
+            },
+            
+            // Deliverability Services
+            'Kickbox Blog': {
+                url: 'https://kickbox.com/blog/feed',
+                category: 'Deliverability'
+            },
+            'Email on Acid Blog': {
+                url: 'https://www.emailonacid.com/blog/feed/',
+                category: 'Email Testing'
+            },
+            'Validity Blog': {
+                url: 'https://www.validity.com/blog/feed/',
+                category: 'Deliverability'
+            },
+            'ZeroBounce Blog': {
+                url: 'https://www.zerobounce.net/blog/feed/',
+                category: 'Email Validation'
+            },
+            'GlockApps Blog': {
+                url: 'https://glockapps.com/blog/feed/',
+                category: 'Deliverability'
+            },
+            
+            // Industry Experts & Resources
+            'Litmus Blog': {
+                url: 'https://www.litmus.com/blog/feed/',
+                category: 'Email Design'
+            },
+            'Really Good Emails Blog': {
+                url: 'https://reallygoodemails.com/blog/feed/',
+                category: 'Email Design'
+            },
+            'Email Vendor Selection': {
+                url: 'https://www.emailvendorselection.com/feed/',
+                category: 'Industry Analysis'
+            },
+            'Only Influencers': {
+                url: 'https://www.onlyinfluencers.com/feed',
+                category: 'Industry Expert'
+            },
+            'Spam Resource': {
+                url: 'https://www.spamresource.com/feeds/posts/default',
+                category: 'Deliverability'
+            },
+            
+            // Authentication & Technical
+            'DMARC.org News': {
+                url: 'https://dmarc.org/feed/',
+                category: 'Authentication'
+            },
+            'Word to the Wise': {
+                url: 'https://wordtothewise.com/feed/',
+                category: 'Industry Expert'
+            },
+            'Proofpoint Blog': {
+                url: 'https://www.proofpoint.com/us/blog/rss.xml',
+                category: 'Security'
+            }
+        };
+
+        // SMS RSS Feeds Configuration
+        const SMS_RSS_FEEDS = {
+            // SMS Platforms
+            'Twilio Blog': {
+                url: 'https://www.twilio.com/blog/feed',
+                category: 'SMS Platform'
+            },
+            'Sinch Blog': {
+                url: 'https://www.sinch.com/blog/feed/',
+                category: 'SMS Platform'
+            },
+            'Bandwidth Blog': {
+                url: 'https://www.bandwidth.com/blog/feed/',
+                category: 'SMS Platform'
+            },
+            'MessageBird Blog': {
+                url: 'https://messagebird.com/blog/feed',
+                category: 'SMS Platform'
+            },
+            'Plivo Blog': {
+                url: 'https://www.plivo.com/blog/feed/',
+                category: 'SMS Platform'
+            },
+            'Vonage Blog': {
+                url: 'https://www.vonage.com/resources/feed/',
+                category: 'SMS Platform'
+            },
+            
+            // SMS Marketing Tools
+            'SimpleTexting Blog': {
+                url: 'https://simpletexting.com/blog/feed/',
+                category: 'SMS Marketing'
+            },
+            'EZ Texting Blog': {
+                url: 'https://www.eztexting.com/blog/feed',
+                category: 'SMS Marketing'
+            },
+            'SlickText Blog': {
+                url: 'https://www.slicktext.com/blog/feed/',
+                category: 'SMS Marketing'
+            },
+            'Attentive Blog': {
+                url: 'https://www.attentivemobile.com/blog/rss.xml',
+                category: 'SMS Marketing'
+            },
+            'Klaviyo SMS': {
+                url: 'https://www.klaviyo.com/blog/topic/sms-marketing/feed',
+                category: 'SMS Marketing'
+            },
+            'TextMagic Blog': {
+                url: 'https://www.textmagic.com/blog/feed/',
+                category: 'SMS Marketing'
+            },
+            
+            // Mobile Marketing & Engagement
+            'Braze Blog': {
+                url: 'https://www.braze.com/resources/feed.xml',
+                category: 'Mobile Marketing'
+            },
+            'Airship Blog': {
+                url: 'https://www.airship.com/blog/feed/',
+                category: 'Mobile Marketing'
+            },
+            'OneSignal Blog': {
+                url: 'https://onesignal.com/blog/rss/',
+                category: 'Mobile Marketing'
+            },
+            'CleverTap Blog': {
+                url: 'https://clevertap.com/blog/feed/',
+                category: 'Mobile Marketing'
+            },
+            'MoEngage Blog': {
+                url: 'https://www.moengage.com/blog/feed/',
+                category: 'Mobile Marketing'
+            },
+            
+            // Compliance & Industry
+            'Mobile Ecosystem Forum': {
+                url: 'https://mobileecosystemforum.com/feed/',
+                category: 'Industry'
+            },
+            'Tatango Blog': {
+                url: 'https://www.tatango.com/blog/feed/',
+                category: 'SMS Marketing'
+            },
+            'Mobile Marketing Watch': {
+                url: 'https://mobilemarketingwatch.com/feed/',
+                category: 'Industry News'
+            }
+        };
+
+        // Compliance-specific keywords
+        const COMPLIANCE_KEYWORDS = [
+            // Legal Terms
+            'law change', 'law changing', 'legal change', 'legal mandate', 'legislation',
+            'regulatory update', 'regulatory change', 'regulation', 'compliance requirement',
+            'compliance update', 'compliance mandate', 'enforcement action', 'enforcement',
+            
+            // Specific Regulations
+            'tcpa', 'mini tcpa', 'gdpr', 'ccpa', 'cpra', 'can-spam', 'casl', 'pecr',
+            'privacy law', 'data protection', 'consumer protection', 'opt-in requirement',
+            'opt-out requirement', 'consent requirement', 'dma compliance',
+            
+            // Regulatory Actions
+            'fcc ruling', 'ftc action', 'ico guidance', 'regulatory guidance',
+            'compliance deadline', 'effective date', 'implementation date',
+            'penalty', 'fine', 'violation', 'complaint', 'investigation',
+            
+            // Industry Specific
+            '10dlc', 'a2p compliance', 'carrier requirement', 'registration mandate',
+            'authentication requirement', 'spam regulation', 'robocall', 'robotext'
+        ];
+
+        // Email-specific keywords
+        const EMAIL_KEYWORDS = [
+            // Technical
+            'deliverability', 'inbox placement', 'spam', 'spf', 'dkim', 'dmarc', 
+            'authentication', 'ip reputation', 'domain reputation', 'bounce', 'blacklist',
+            'whitelist', 'sender score', 'feedback loop', 'ip warming',
+            
+            // Email Components
+            'subject line', 'preheader', 'email design', 'email template', 'html email',
+            'amp email', 'dark mode email', 'email accessibility',
+            
+            // Marketing
+            'email marketing', 'email campaign', 'email automation', 'drip campaign',
+            'segmentation', 'personalization', 'a/b testing', 'email metrics',
+            'open rate', 'click rate', 'conversion rate', 'unsubscribe',
+            
+            // Compliance
+            'can-spam', 'gdpr', 'ccpa', 'casl', 'privacy', 'consent', 'opt-in', 'opt-out',
+            
+            // Providers
+            'gmail', 'outlook', 'yahoo mail', 'apple mail', 'aol mail'
+        ];
+
+        // SMS-specific keywords
+        const SMS_KEYWORDS = [
+            // Technical
+            'sms', 'text message', 'text messaging', 'mms', 'short code', 'shortcode', 
+            'long code', '10dlc', 'a2p', 'p2p', 'smpp', 'ss7', 'carrier', 'throughput',
+            
+            // Compliance
+            'tcpa', 'ctia', 'opt-in', 'opt-out', 'stop', 'consent', 'compliance',
+            'shaft', 'carrier filtering', 'spam', 'a2p 10dlc', 'campaign registry',
+            
+            // Features
+            'two-way', 'conversational', 'sms api', 'bulk sms', 'sms gateway',
+            'message segments', 'unicode', 'concatenation', 'delivery receipt',
+            
+            // Marketing
+            'sms marketing', 'sms campaign', 'text campaign', 'mobile marketing',
+            'sms automation', 'drip campaign', 'sms roi', 'click-through', 'conversion',
+            
+            // Emerging
+            'rcs', 'rich communication', 'rich messaging', 'business messaging',
+            'conversational commerce', 'mobile wallet', 'mobile payment'
+        ];
+
+        // Priority keywords
+        const EMAIL_HIGH_PRIORITY = [
+            'major update', 'breaking change', 'security', 'vulnerability', 'deliverability crisis',
+            'blacklist', 'spam trap', 'authentication failure', 'google update', 'microsoft update',
+            'yahoo update', 'urgent', 'critical', 'immediate action'
+        ];
+
+        const EMAIL_MEDIUM_PRIORITY = [
+            'new feature', 'update', 'best practice', 'improvement', 'beta', 'announcement',
+            'policy change', 'guideline', 'recommendation'
+        ];
+
+        const SMS_HIGH_PRIORITY = [
+            'tcpa violation', 'compliance violation', 'carrier block', 'filtering',
+            '10dlc deadline', 'registration required', 'service disruption', 'outage',
+            'security breach', 'spam detection', 'deliverability issue', 'major update'
+        ];
+
+        const SMS_MEDIUM_PRIORITY = [
+            'new feature', 'product update', 'integration', 'partnership', 
+            'best practice', 'case study', 'industry report', 'benchmark'
+        ];
+
+        // Storage keys
+        const EMAIL_STORAGE_KEY = 'deliverabilityData';
+        const EMAIL_LAST_VISIT_KEY = 'deliverabilityLastVisit';
+        const EMAIL_SOURCE_STATUS_KEY = 'emailSourceStatus';
+        const EMAIL_LAST_UPDATE_KEY = 'emailLastUpdate';
+
+        const SMS_STORAGE_KEY = 'smsIndustryData';
+        const SMS_LAST_VISIT_KEY = 'smsLastVisit';
+        const SMS_SOURCE_STATUS_KEY = 'smsSourceStatus';
+        const SMS_LAST_UPDATE_KEY = 'smsLastUpdate';
+
+        const COMPLIANCE_STORAGE_KEY = 'complianceData';
+        const COMPLIANCE_LAST_VISIT_KEY = 'complianceLastVisit';
+        const COMPLIANCE_SOURCE_STATUS_KEY = 'complianceSourceStatus';
+        const COMPLIANCE_LAST_UPDATE_KEY = 'complianceLastUpdate';
+
+        // Multiple CORS proxy services with different approaches
+        async function fetchWithMultipleProxies(url) {
+            // Try multiple proxy services
+            const proxyAttempts = [
+                // RSS2JSON API - specifically designed for RSS feeds
+                async () => {
+                    const apiUrl = `https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(url)}`;
+                    const response = await fetch(apiUrl);
+                    const data = await response.json();
+                    if (data.status === 'ok') {
+                        // Convert RSS2JSON format back to XML-like structure for our parser
+                        return convertRSS2JSONToXML(data);
+                    }
+                    throw new Error('RSS2JSON failed');
+                },
+                
+                // AllOrigins proxy
+                async () => {
+                    const response = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`);
+                    if (response.ok) {
+                        return await response.text();
+                    }
+                    throw new Error('AllOrigins failed');
+                },
+                
+                // Alternative AllOrigins endpoint
+                async () => {
+                    const response = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(url)}`);
+                    const data = await response.json();
+                    if (data.status.http_code === 200) {
+                        return data.contents;
+                    }
+                    throw new Error('AllOrigins GET failed');
+                },
+                
+                // Proxy.cors.sh
+                async () => {
+                    const response = await fetch(`https://proxy.cors.sh/${url}`, {
+                        headers: {
+                            'x-cors-api-key': 'temp_key'
+                        }
+                    });
+                    if (response.ok) {
+                        return await response.text();
+                    }
+                    throw new Error('Proxy.cors.sh failed');
+                },
+                
+                // Direct fetch as last resort
+                async () => {
+                    const response = await fetch(url);
+                    if (response.ok) {
+                        return await response.text();
+                    }
+                    throw new Error('Direct fetch failed');
+                }
+            ];
+
+            // Try each proxy method
+            for (const attempt of proxyAttempts) {
+                try {
+                    const result = await attempt();
+                    if (result) return result;
+                } catch (error) {
+                    console.log(`Proxy attempt failed: ${error.message}`);
+                }
+            }
+            
+            throw new Error('All proxy methods failed');
+        }
+
+        // Convert RSS2JSON format to XML string for our existing parser
+        function convertRSS2JSONToXML(data) {
+            let xmlString = '<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel>';
+            
+            // Add feed info
+            xmlString += `<title>${escapeXml(data.feed.title || '')}</title>`;
+            xmlString += `<link>${escapeXml(data.feed.link || '')}</link>`;
+            xmlString += `<description>${escapeXml(data.feed.description || '')}</description>`;
+            
+            // Add items
+            if (data.items && data.items.length > 0) {
+                data.items.forEach(item => {
+                    xmlString += '<item>';
+                    xmlString += `<title>${escapeXml(item.title || '')}</title>`;
+                    xmlString += `<link>${escapeXml(item.link || '')}</link>`;
+                    xmlString += `<description>${escapeXml(item.description || item.content || '')}</description>`;
+                    xmlString += `<pubDate>${escapeXml(item.pubDate || item.published || '')}</pubDate>`;
+                    if (item.guid) {
+                        xmlString += `<guid>${escapeXml(item.guid)}</guid>`;
+                    }
+                    xmlString += '</item>';
+                });
+            }
+            
+            xmlString += '</channel></rss>';
+            return xmlString;
+        }
+
+        // Escape XML special characters
+        function escapeXml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStoredData();
+            updateUI();
+            
+            // Auto-refresh if data is old
+            if (currentView === 'general') {
+                const storageKey = currentMode === 'email' ? EMAIL_LAST_UPDATE_KEY : SMS_LAST_UPDATE_KEY;
+                const lastUpdate = localStorage.getItem(storageKey);
+                if (!lastUpdate || Date.now() - parseInt(lastUpdate) > 3600000) { // 1 hour
+                    refreshFeeds();
+                }
+            }
+        });
+
+        // Switch between Email and SMS mode
+        function switchMode(mode) {
+            currentMode = mode;
+            currentFilter = 'all';
+            
+            // Update button states
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Reset filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.includes('All')) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Update header subtitle
+            const subtitle = mode === 'email' ? 
+                'Real-time monitoring of email deliverability and authentication updates' :
+                'Real-time monitoring of SMS, text messaging, and mobile marketing updates';
+            
+            // Update loading text
+            document.getElementById('loading-text').textContent = 
+                mode === 'email' ? 'Loading email deliverability updates...' : 'Loading SMS industry updates...';
+            
+            loadStoredData();
+            updateUI();
+        }
+
+        // Switch between views
+        function switchView(view) {
+            currentView = view;
+            
+            // Update tab states
+            document.querySelectorAll('.view-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Show/hide views
+            document.querySelectorAll('.view-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${view}-view`).classList.add('active');
+            
+            // Load appropriate data
+            if (view === 'compliance') {
+                loadComplianceData();
+                updateComplianceUI();
+            } else {
+                loadStoredData();
+                updateUI();
+            }
+        }
+
+        // Load stored data based on current mode
+        function loadStoredData() {
+            const storageKey = currentMode === 'email' ? EMAIL_STORAGE_KEY : SMS_STORAGE_KEY;
+            const lastVisitKey = currentMode === 'email' ? EMAIL_LAST_VISIT_KEY : SMS_LAST_VISIT_KEY;
+            const sourceStatusKey = currentMode === 'email' ? EMAIL_SOURCE_STATUS_KEY : SMS_SOURCE_STATUS_KEY;
+            
+            // Load articles
+            const stored = localStorage.getItem(storageKey);
+            if (stored) {
+                try {
+                    const parsedArticles = JSON.parse(stored);
+                    // Filter to only show articles from past 7 days
+                    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+                    allArticles = parsedArticles.filter(article => article.timestamp > sevenDaysAgo);
+                } catch (e) {
+                    console.error('Error loading stored data:', e);
+                    allArticles = [];
+                }
+            } else {
+                allArticles = [];
+            }
+            
+            // Load source status
+            const statusStored = localStorage.getItem(sourceStatusKey);
+            if (statusStored) {
+                try {
+                    sourceStatusData = JSON.parse(statusStored);
+                } catch (e) {
+                    console.error('Error loading source status:', e);
+                    sourceStatusData = {};
+                }
+            } else {
+                sourceStatusData = {};
+            }
+            
+            // Update last visit
+            localStorage.setItem(lastVisitKey, Date.now());
+        }
+
+        // Load compliance data
+        function loadComplianceData() {
+            const stored = localStorage.getItem(COMPLIANCE_STORAGE_KEY);
+            if (stored) {
+                try {
+                    const parsedArticles = JSON.parse(stored);
+                    const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+                    complianceArticles = parsedArticles.filter(article => article.timestamp > sevenDaysAgo);
+                } catch (e) {
+                    console.error('Error loading compliance data:', e);
+                    complianceArticles = [];
+                }
+            } else {
+                complianceArticles = [];
+            }
+            
+            // Load source status
+            const statusStored = localStorage.getItem(COMPLIANCE_SOURCE_STATUS_KEY);
+            if (statusStored) {
+                try {
+                    complianceSourceStatusData = JSON.parse(statusStored);
+                } catch (e) {
+                    console.error('Error loading compliance source status:', e);
+                    complianceSourceStatusData = {};
+                }
+            } else {
+                complianceSourceStatusData = {};
+            }
+            
+            // Update last visit
+            localStorage.setItem(COMPLIANCE_LAST_VISIT_KEY, Date.now());
+        }
+
+        // Update UI
+        function updateUI() {
+            displayArticles();
+            updateStats();
+            updateLastUpdated();
+            displaySourceStatus();
+        }
+
+        // Update Compliance UI
+        function updateComplianceUI() {
+            displayComplianceArticles();
+            updateComplianceStats();
+            updateComplianceLastUpdated();
+            displayComplianceSourceStatus();
+        }
+
+        // Refresh all feeds
+        async function refreshFeeds() {
+            const button = document.querySelector('.refresh-btn');
+            const loading = document.getElementById('loading');
+            
+            button.disabled = true;
+            loading.style.display = 'block';
+            
+            const rssFeeds = currentMode === 'email' ? EMAIL_RSS_FEEDS : SMS_RSS_FEEDS;
+            const keywords = currentMode === 'email' ? EMAIL_KEYWORDS : SMS_KEYWORDS;
+            const storageKey = currentMode === 'email' ? EMAIL_STORAGE_KEY : SMS_STORAGE_KEY;
+            const sourceStatusKey = currentMode === 'email' ? EMAIL_SOURCE_STATUS_KEY : SMS_SOURCE_STATUS_KEY;
+            const lastUpdateKey = currentMode === 'email' ? EMAIL_LAST_UPDATE_KEY : SMS_LAST_UPDATE_KEY;
+            const lastVisitKey = currentMode === 'email' ? EMAIL_LAST_VISIT_KEY : SMS_LAST_VISIT_KEY;
+            
+            const newArticles = [];
+            const tempSourceStatus = {};
+            const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+            
+            // Initialize source status
+            for (const [source, config] of Object.entries(rssFeeds)) {
+                tempSourceStatus[source] = {
+                    category: config.category,
+                    status: 'checking',
+                    lastArticle: 'Checking...',
+                    articleCount: 0,
+                    lastChecked: new Date().toISOString()
+                };
+            }
+            
+            // Display initial checking status
+            sourceStatusData = tempSourceStatus;
+            displaySourceStatus();
+            
+            // Process feeds one by one with better error handling
+            const feedEntries = Object.entries(rssFeeds);
+            
+            for (let i = 0; i < feedEntries.length; i++) {
+                const [source, config] = feedEntries[i];
+                
+                try {
+                    console.log(`Fetching ${source}...`);
+                    
+                    // Set a timeout for each feed
+                    const timeout = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout')), 30000)
+                    );
+                    
+                    const xmlText = await Promise.race([
+                        fetchWithMultipleProxies(config.url),
+                        timeout
+                    ]);
+                    
+                    const parser = new DOMParser();
+                    const xml = parser.parseFromString(xmlText, 'text/xml');
+                    
+                    // Check for parser error
+                    const parserError = xml.querySelector('parsererror');
+                    if (parserError) {
+                        throw new Error('Invalid XML feed');
+                    }
+                    
+                    const items = xml.querySelectorAll('item, entry');
+                    let sourceArticleCount = 0;
+                    let relevantArticleCount = 0;
+                    let latestDate = null;
+                    
+                    items.forEach((item, index) => {
+                        // Limit to first 50 items per feed
+                        if (index > 50) return;
+                        
+                        const titleEl = item.querySelector('title');
+                        const linkEl = item.querySelector('link');
+                        const descEl = item.querySelector('description, summary, content\\:encoded, content');
+                        const dateEl = item.querySelector('pubDate, published, updated, dc\\:date, date');
+                        
+                        if (titleEl && linkEl) {
+                            const title = titleEl.textContent || '';
+                            let link = linkEl.textContent || linkEl.getAttribute('href') || '';
+                            
+                            // Handle relative URLs
+                            if (link && !link.startsWith('http')) {
+                                try {
+                                    const urlObj = new URL(config.url);
+                                    link = urlObj.origin + link;
+                                } catch (e) {
+                                    // Skip invalid URLs
+                                    return;
+                                }
+                            }
+                            
+                            const description = descEl ? (descEl.textContent || '') : '';
+                            
+                            // Parse date
+                            let pubDate = new Date();
+                            if (dateEl && dateEl.textContent) {
+                                const parsedDate = new Date(dateEl.textContent);
+                                if (!isNaN(parsedDate.getTime())) {
+                                    pubDate = parsedDate;
+                                }
+                            }
+                            
+                            // Only process articles from past 7 days
+                            if (pubDate.getTime() > sevenDaysAgo) {
+                                sourceArticleCount++;
+                                
+                                // Track latest article date
+                                if (!latestDate || pubDate > latestDate) {
+                                    latestDate = pubDate;
+                                }
+                                
+                                // Check if relevant to our keywords
+                                const fullText = `${title} ${description}`.toLowerCase();
+                                const isRelevant = keywords.some(keyword => 
+                                    fullText.includes(keyword.toLowerCase())
+                                );
+                                
+                                // Also check for compliance keywords
+                                const isCompliance = COMPLIANCE_KEYWORDS.some(keyword =>
+                                    fullText.includes(keyword.toLowerCase())
+                                );
+                                
+                                if (isRelevant) {
+                                    relevantArticleCount++;
+                                    const article = {
+                                        title: cleanText(title).substring(0, 200),
+                                        link: link,
+                                        description: cleanText(description).substring(0, 300) + '...',
+                                        source: source,
+                                        category: config.category,
+                                        pubDate: pubDate.toISOString(),
+                                        timestamp: pubDate.getTime(),
+                                        id: `${source}-${link}`,
+                                        priority: determinePriority(fullText),
+                                        tags: extractTags(fullText),
+                                        isCompliance: isCompliance
+                                    };
+                                    
+                                    newArticles.push(article);
+                                }
+                            }
+                        }
+                    });
+                    
+                    // Update source status
+                    tempSourceStatus[source] = {
+                        category: config.category,
+                        status: relevantArticleCount > 0 ? 'active' : (sourceArticleCount > 0 ? 'inactive' : 'no-content'),
+                        lastArticle: latestDate ? formatDate(latestDate) : 'No articles in past 7 days',
+                        articleCount: relevantArticleCount,
+                        totalCount: sourceArticleCount,
+                        lastChecked: new Date().toISOString()
+                    };
+                    
+                    console.log(`${source}: ${relevantArticleCount} relevant / ${sourceArticleCount} total articles`);
+                    
+                } catch (error) {
+                    console.error(`Error fetching ${source}:`, error.message);
+                    tempSourceStatus[source] = {
+                        category: config.category,
+                        status: 'error',
+                        lastArticle: 'Feed unavailable',
+                        articleCount: 0,
+                        lastChecked: new Date().toISOString(),
+                        error: error.message
+                    };
+                }
+                
+                // Update display after each feed
+                sourceStatusData = { ...tempSourceStatus };
+                displaySourceStatus();
+                
+                // Small delay between feeds to avoid rate limiting
+                if (i < feedEntries.length - 1) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+            }
+            
+            // Remove duplicates and sort
+            const uniqueArticles = removeDuplicates(newArticles);
+            allArticles = uniqueArticles.sort((a, b) => b.timestamp - a.timestamp);
+            
+            // Save all articles
+            localStorage.setItem(storageKey, JSON.stringify(allArticles));
+            localStorage.setItem(lastUpdateKey, Date.now());
+            localStorage.setItem(sourceStatusKey, JSON.stringify(tempSourceStatus));
+            
+            // Update source status
+            sourceStatusData = tempSourceStatus;
+            displaySourceStatus();
+            
+            // Update UI
+            displayArticles();
+            updateStats();
+            updateLastUpdated();
+            
+            button.disabled = false;
+            loading.style.display = 'none';
+            
+            // Show summary
+            const newCount = allArticles.filter(a => 
+                a.timestamp > parseInt(localStorage.getItem(lastVisitKey))
+            ).length;
+            
+            const modeLabel = currentMode === 'email' ? 'Email' : 'SMS';
+            const activeCount = Object.values(tempSourceStatus).filter(s => s.status === 'active').length;
+            const totalSources = Object.keys(tempSourceStatus).length;
+            
+            alert(`${modeLabel} refresh complete!\n\nArticles from past 7 days: ${allArticles.length}\nNew since last visit: ${newCount}\nActive sources: ${activeCount}/${totalSources}`);
+        }
+
+        // Refresh compliance feeds
+        async function refreshComplianceFeeds() {
+            const button = document.querySelector('#compliance-view .refresh-btn');
+            const loading = document.getElementById('compliance-loading');
+            
+            button.disabled = true;
+            loading.style.display = 'block';
+            
+            const newArticles = [];
+            const tempSourceStatus = {};
+            const sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+            
+            // Initialize source status
+            for (const [source, config] of Object.entries(COMPLIANCE_RSS_FEEDS)) {
+                tempSourceStatus[source] = {
+                    category: config.category,
+                    type: config.type,
+                    status: 'checking',
+                    lastArticle: 'Checking...',
+                    articleCount: 0,
+                    lastChecked: new Date().toISOString()
+                };
+            }
+            
+            // Display initial checking status
+            complianceSourceStatusData = tempSourceStatus;
+            displayComplianceSourceStatus();
+            
+            // Process compliance feeds
+            const feedEntries = Object.entries(COMPLIANCE_RSS_FEEDS);
+            
+            for (let i = 0; i < feedEntries.length; i++) {
+                const [source, config] = feedEntries[i];
+                
+                try {
+                    console.log(`Fetching compliance feed: ${source}...`);
+                    
+                    const timeout = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Timeout')), 30000)
+                    );
+                    
+                    const xmlText = await Promise.race([
+                        fetchWithMultipleProxies(config.url),
+                        timeout
+                    ]);
+                    
+                    const parser = new DOMParser();
+                    const xml = parser.parseFromString(xmlText, 'text/xml');
+                    
+                    const parserError = xml.querySelector('parsererror');
+                    if (parserError) {
+                        throw new Error('Invalid XML feed');
+                    }
+                    
+                    const items = xml.querySelectorAll('item, entry');
+                    let sourceArticleCount = 0;
+                    let relevantArticleCount = 0;
+                    let latestDate = null;
+                    
+                    items.forEach((item, index) => {
+                        if (index > 50) return;
+                        
+                        const titleEl = item.querySelector('title');
+                        const linkEl = item.querySelector('link');
+                        const descEl = item.querySelector('description, summary, content\\:encoded, content');
+                        const dateEl = item.querySelector('pubDate, published, updated, dc\\:date, date');
+                        
+                        if (titleEl && linkEl) {
+                            const title = titleEl.textContent || '';
+                            let link = linkEl.textContent || linkEl.getAttribute('href') || '';
+                            
+                            if (link && !link.startsWith('http')) {
+                                try {
+                                    const urlObj = new URL(config.url);
+                                    link = urlObj.origin + link;
+                                } catch (e) {
+                                    return;
+                                }
+                            }
+                            
+                            const description = descEl ? (descEl.textContent || '') : '';
+                            
+                            let pubDate = new Date();
+                            if (dateEl && dateEl.textContent) {
+                                const parsedDate = new Date(dateEl.textContent);
+                                if (!isNaN(parsedDate.getTime())) {
+                                    pubDate = parsedDate;
+                                }
+                            }
+                            
+                            if (pubDate.getTime() > sevenDaysAgo) {
+                                sourceArticleCount++;
+                                
+                                if (!latestDate || pubDate > latestDate) {
+                                    latestDate = pubDate;
+                                }
+                                
+                                const fullText = `${title} ${description}`.toLowerCase();
+                                
+                                // Check for compliance keywords
+                                const isCompliance = COMPLIANCE_KEYWORDS.some(keyword =>
+                                    fullText.includes(keyword.toLowerCase())
+                                );
+                                
+                                // Also check if it's related to current mode (email/SMS)
+                                const modeKeywords = currentMode === 'email' ? EMAIL_KEYWORDS : SMS_KEYWORDS;
+                                const isModeRelevant = modeKeywords.some(keyword =>
+                                    fullText.includes(keyword.toLowerCase())
+                                );
+                                
+                                if (isCompliance || isModeRelevant) {
